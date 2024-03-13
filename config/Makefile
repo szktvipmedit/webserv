@@ -3,7 +3,7 @@ CPPS = test.cpp utils.cpp \
 
 OBJS = ${CPPS:.cpp=.o}
 
-NAME = parse
+NAME = parse_test
 CXX = c++
 CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -g3
 %.o: %.cpp

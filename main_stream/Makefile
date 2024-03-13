@@ -3,7 +3,7 @@ CPPS =  ../config/utils.cpp ../config/Config.cpp ../config/VirtualServer.cpp ../
 
 OBJS = ${CPPS:.cpp=.o}
 
-NAME = main
+NAME = webserv
 CXX = c++
 CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -g3
 %.o: %.cpp
