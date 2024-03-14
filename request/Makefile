@@ -1,10 +1,8 @@
-CPPS =  ../config/utils.cpp ../config/Config.cpp ../config/VirtualServer.cpp ../config/Location.cpp \
-		../request/RequestParse.cpp \
-		main.cpp
+CPPS = test.cpp RequestParse.cpp ../config/utils.cpp
 
 OBJS = ${CPPS:.cpp=.o}
 
-NAME = webserv
+NAME = request_parse_test
 CXX = c++
 CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -g3
 %.o: %.cpp
