@@ -1,4 +1,5 @@
 #include "../config/Config.hpp"
+#include "../request/RequestParse.hpp"
 
 int main(int argc, char **argv){
     if(argc != 2)
@@ -59,7 +60,13 @@ int main(int argc, char **argv){
                     if(bytesReceived > 0){
                         { //stringで受け取れれば足りるならこっち
                             std::string request(buf.begin(), buf.end());
-                            std::cout << request << std::endl;
+                            RequestParse requestInfo(request);
+                            if(requestInfo.getMethod() == "GET")
+                                std::cout << "ここでGET METHODを実行する" << std::endl;
+                            else if(requestInfo.getMethod() == "POST")
+                                std::cout << "ここでPOST METHODを実行する" << std::endl;
+                            else if(requestInfo.getMethod() == "DELETE")
+                                std::cout << "ここでDELETE METHODを実行する" << std::endl;
                         }
                         // { //ファイルを生成してそこに入れたいならこっち
                         //     buf[bytesReceived] = '\0'; // 文字列の終端をセット
