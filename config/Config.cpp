@@ -98,6 +98,7 @@ SOCKET tcpListen(std::string hostname, std::string port){
             close(sockfd);
             throw std::runtime_error("Error: listen(): failed"); 
         }
+        std::cout << "sockfd = " << sockfd << std::endl;
         printf("Listen succeeded\n"); 
         return sockfd;
 }
