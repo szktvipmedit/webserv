@@ -19,48 +19,63 @@ int main(int argc, char **argv){
             keventMap[*it] = new struct kevent;
             EV_SET(keventMap[*it], *it, EVFILT_READ, EV_ADD, 0, 0, NULL);
             if(kevent(kq, keventMap[*it], 1, NULL, 0, &timeSpec) == -1){ // ポーリングするためにはtimeout引数を非NULLのtimespec構造体ポインタを指す必要がある
-                for(socketSet::const_iterator it=tcpSocketSet.begin();it==tcpSocketSet.end();it++)
+                std::cout << strerror(errno) << std::endl;
+                for(socketSet::const_iterator it=tcpSocketSet.begin();it!=tcpSocketSet.end();it++)
                     close(*it);
                 throw std::runtime_error("Error: kevent() failed()");
             }
-            std::cout << "kqに" << *it << "を追加" << std::endl;
         }
         struct kevent eventlist[tcpSocketSet.size()+(tcpSocketSet.size()/2)];
+        std::set<int>acceptedSockets;
         while(1){
             std::cout << "======== EVENT MONITORING =========" << std::endl;
             size_t nevent = kevent(kq, NULL, 0, eventlist, sizeof(*eventlist), NULL);
+            std::cout << "nevent: " << nevent << std::endl;
             for(size_t i = 0; i<nevent;i++){
                 int sockfd = eventlist[i].ident;
+                // std::cout << "event generate socket num = " << sockfd << std::endl;
                 struct sockaddr_storage client_sa;  // sockaddr_in 型ではない。 
                 socklen_t len = sizeof(client_sa);   
                 std::set<int>::iterator it = tcpSocketSet.find(sockfd);
-                if (it != tcpSocketSet.end()) {
+                if (it != tcpSocketSet.end() && acceptedSockets.find(sockfd) == acceptedSockets.end()) {
                     int new_sock = accept(sockfd, (struct sockaddr*) &client_sa, &len);
                     keventMap[new_sock] = new struct kevent;
                     EV_SET(keventMap[new_sock], new_sock, EVFILT_READ, EV_ADD, 0, 0, NULL);
-                    std::cout << "TCP CONNECTION CREATE" << std::endl;
+                    if(kevent(kq, keventMap[new_sock], 1, NULL, 0, &timeSpec) == -1){ // ポーリングするためにはtimeout引数を非NULLのtimespec構造体ポインタを指す必要がある
+                        for(socketSet::const_iterator it=tcpSocketSet.begin();it==tcpSocketSet.end();it++){
+                            free(keventMap[*it]);
+                            close(*it);
+                        }
+                        throw std::runtime_error("Error: kevent2() failed()");
+                    }
+                    acceptedSockets.insert(sockfd);
+                    std::cout << "TCP CONNECTION CREATE: new socket = " << new_sock << std::endl;
                 }
                 else
                 {
-                    
-                    std::string request;
-                    recv(sockfd, &request, SIZE_MAX, MSG_DONTWAIT);
-                    std::cout << request << std::endl;
-                    // if (fork() == 0) { 
-                    //     // 子プロセス 
-                    //     std::string buf;
-                    //     int len = read(sockfd, &buf, SIZE_MAX);
-                    //     std::cout << buf << std::endl;
-                    //     (void)len;   
-                    //     exit(0); 
-                    // } 
-                    // std::string buf;
-                    //  int len = read(sockfd, &buf, sizeof(buf));
-                    // if ( len == 0 ){
-                    //     close(sockfd);
-                    // } else {
-                    //     write(sockfd, &buf, len);
-                    // }
+                    const unsigned int MAX_BUF_LENGTH = 4096;
+                    std::vector<char> buf(MAX_BUF_LENGTH);
+                    int bytesReceived = recv(sockfd, &buf[0], MAX_BUF_LENGTH, MSG_DONTWAIT);
+                    if(bytesReceived > 0){
+                        { //stringで受け取れれば足りるならこっち
+                            std::string request(buf.begin(), buf.end());
+                            std::cout << request << std::endl;
+                        }
+                        // { //ファイルを生成してそこに入れたいならこっち
+                        //     buf[bytesReceived] = '\0'; // 文字列の終端をセット
+                        //     std::string request(buf.begin(), buf.end());
+                        //     std::cout << request << std::endl;
+                        //     int requestfd = open("../request/server_recv.txt", O_RDWR | O_CREAT, 0644);
+                        //     if(requestfd == -1){
+                        //         perror("open");
+                        //         throw std::runtime_error("open failed");
+                        //     }
+                        //     write(requestfd, request.c_str(), request.size());
+                        //     close(requestfd);
+                        // }
+                        
+                    }   
+                    close(sockfd);
                 }
             }
         }
