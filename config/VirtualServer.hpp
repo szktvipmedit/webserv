@@ -8,6 +8,7 @@
 typedef std::map<std::string, std::string> serverMap;
 typedef std::map<std::string, Location*> locationsMap;
 
+#define ERROR_PAGE_404 "documents/404.html"
 class Location;
 class VirtualServer{
     private:
@@ -31,6 +32,7 @@ class VirtualServer{
     private:
         void confirmServerName();
         void confirmListenPort();
+        void confirmErrorPage();
 };
 
 #endif
