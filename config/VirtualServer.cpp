@@ -50,6 +50,7 @@ void VirtualServer::setLocation(std::string locationPath, Location *location){
 void VirtualServer::confirmValues(){
     confirmServerName();
     confirmListenPort();
+    confirmErrorPage();
 }
 void VirtualServer::confirmServerName(){
     if(serverSetting.find("server_name") == serverSetting.end()){
@@ -82,4 +83,18 @@ void VirtualServer::confirmListenPort(){
     int port = stoi(serverSetting["listen"]);
     if(!(0 <= port && port <= 65535))
         throw std::runtime_error("Error: listen port is out of range"); 
+}
+
+void VirtualServer::confirmErrorPage(){
+    if(serverSetting.find("error_page") == serverSetting.end()){
+        setSetting("error_page", "404 document/404.html");
+    }
+    if(serverSetting.find("error_page") != serverSetting.end()){
+        std::vector<std::string>status = split(serverSetting["error_page"], ' ');
+        for(std::vector<std::string>::iterator it=status.begin(); it != status.end();it++){
+            if(*it == "404")
+                return;
+        }
+        serverSetting["error_page"] = "404 "+serverSetting["error_page"];
+    }
 }
