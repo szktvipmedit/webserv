@@ -6,6 +6,8 @@
 #define ALIVE true;
 #define DEAD false;
 
+typedef std::map<std::string, std::string> headersMap;
+
 class RequestParse{
     private:
         RequestParse();
@@ -18,23 +20,29 @@ class RequestParse{
         std::string getMethod();
         std::string getPath();
         std::string getVersion();
-        std::string getHeaders();
-        bool getTcpKeepAlive();
+        std::string getHeaders(std::string header);
+        std::string getBody();
 
     private: 
-        std::string getFirstRow(std::string requestMessage);
-        void setMethodPathVersion(std::string firstRow);
-        std::string setHeaders(std::string requestMessage);
-        bool setTcpKeepAlive();
-
+        std::string getRequestLine(std::string& requestMessage);
+        void setMethodPathVersion(std::string& requestMessage);
+        void setHeadersAndBody(std::string& requestMessage);
+        void setHeaders(std::vector<std::string> linesVec, std::vector<std::string>::iterator& it);
+        std::vector<std::string> splitLines(std::string str, char sep);
+        void setBody(std::vector<std::string> linesVec, std::vector<std::string>::iterator itFromBody);
+        std::string createBodyStringFromLinesVector(std::vector<std::string> linesVec, std::vector<std::string>::iterator itFromBody);
+        void bodyUnChunk(std::vector<std::string> linesVec, std::vector<std::string>::iterator itFromBody);
     private:
 
     private:
-        const std::string method;
-        const std::string path;
-        const std::string version;
-        const std::string headers;
-        const bool tcpKeepAlive;
+        std::string method;
+        std::string path;
+        std::string version;
+        headersMap headers;
+        std::string body;
+
+    public:
+        void test__headers();
 };
 
 #endif
