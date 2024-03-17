@@ -8,8 +8,8 @@
             "type": "lldb",
             "request": "launch",
             "name": "Debug",
-            "program": "${workspaceFolder}/main_stream/webserv",
-            "args": ["configures/example.conf"],
+            "program": "${workspaceFolder}/request/request_parse_test",
+            "args": [],
             "cwd": "${workspaceFolder}"
         }
     ]

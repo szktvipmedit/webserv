@@ -1,17 +1,15 @@
 #include "RequestParse.hpp"
 
-RequestParse::RequestParse(std::string requestMessage): tcpKeepAlive(true){
+RequestParse::RequestParse(std::string requestMessage){
     setMethodPathVersion(requestMessage);
-    const_cast<std::string&>(headers) = setHeaders(requestMessage); 
-    const_cast<bool&>(tcpKeepAlive) = setTcpKeepAlive(); 
-
+    setHeadersAndBody(requestMessage);
 }
 
 RequestParse::~RequestParse(){
 
 }
 
-RequestParse::RequestParse(const RequestParse& other):tcpKeepAlive(other.tcpKeepAlive){
+RequestParse::RequestParse(const RequestParse& other){
     if(this != &other)
         *this = other;
 }
@@ -21,50 +19,87 @@ RequestParse& RequestParse::operator=(const RequestParse& other){
         const_cast<std::string&>(method) = other.method;
         const_cast<std::string&>(path) = other.path;
         const_cast<std::string&>(version) = other.version;
-        const_cast<std::string&>(headers) = other.headers;
-        const_cast<bool&>(tcpKeepAlive) = other.tcpKeepAlive;
 
         return *this;
     }
     return *this;
 }
-std::string RequestParse::getFirstRow(std::string requestMessage){
+std::string RequestParse::getRequestLine(std::string& requestMessage){
     std::string::size_type idx = requestMessage.find("\n", 0);
     if(idx == std::string::npos)
         throw std::runtime_error("Error: invalid request: non new line");
     std::string firstRow = requestMessage.substr(0, idx);
     firstRow.pop_back();
+    requestMessage = requestMessage.substr(idx+1);
     return firstRow;
 }
 
-
-void RequestParse::setMethodPathVersion(std::string requestMessage){
-    std::string firstRow = getFirstRow(requestMessage);
-    std::vector<std::string>splitFirstRow = split(firstRow, ' ');
+void RequestParse::setMethodPathVersion(std::string& requestMessage){
+    std::string firstRow = getRequestLine(requestMessage);
+    strVec splitFirstRow = split(firstRow, ' ');
     if(splitFirstRow.size() != 3)
         throw std::runtime_error("Error: invalid request: non space in first line"); 
-    const_cast<std::string&>(method) = splitFirstRow[0];
-    const_cast<std::string&>(path) = splitFirstRow[1];
-    const_cast<std::string&>(version) = splitFirstRow[2];
+    method = splitFirstRow[0];
+    path = splitFirstRow[1];
+    version = splitFirstRow[2];
+
 }
-std::string RequestParse::setHeaders(std::string requestMessage){
-    std::string::size_type idx = requestMessage.find("\n", 0);
-    return requestMessage.substr(idx+1);
+
+void RequestParse::setHeadersAndBody(std::string& requestMessage){
+    strVec linesVec = splitLines(requestMessage, '\n');
+    strVec::iterator it;
+    setHeaders(linesVec, it);
+    setBody(linesVec, it);
 }
-bool RequestParse::setTcpKeepAlive(){
-    std::string::size_type firstIdx = 0;
-    std::string::size_type secondIdx = headers.find("\n", 0);
-    while(secondIdx != std::string::npos){
-        std::string row(headers.begin()+firstIdx, headers.begin()+secondIdx);
-        row.pop_back();
-        std::vector<std::string>item = split(row, ' ');
-        if(item.size() == 2 && item[0] == "Connection:" && item[1] == "keep-alive")
-            return ALIVE;
-        firstIdx = secondIdx+1;
-        secondIdx = headers.find("\n", secondIdx+1);
+
+strVec createHeaderAndDirective(strVec::iterator it);
+
+void RequestParse::setHeaders(strVec linesVec, strVec::iterator& it){
+    for(it=linesVec.begin();it != linesVec.end();it++){
+        std::cout << *it << std::endl;
+        if(*it == "" || *it == "\r" || (*it).size() == 0)
+            break;
+        strVec line = createHeaderAndDirective(it);
+        headers[line[0]] = line[1];
     }
-    return DEAD;
+    it++;
 }
+
+void RequestParse::setBody(strVec  linesVec, strVec::iterator itFromBody) {
+    std::cout << (*itFromBody).size() << std::endl;
+    if((*itFromBody).size() == 0 || itFromBody == linesVec.end()){
+        body = "";
+        return;
+    }
+    if(headers["Transfer-Encoding"] == "chunked")
+        return bodyUnChunk(linesVec, itFromBody);
+    body = createBodyStringFromLinesVector(linesVec, itFromBody);
+}
+void RequestParse::bodyUnChunk(strVec linesVec, strVec::iterator itFromBody){
+    /*
+        文字数が書かれた行を無視して連結するだけの処理
+    */
+   std::string bodyString;
+   size_t mod = 0;
+    for(strVec::iterator it=itFromBody;it!=linesVec.end();it++){
+        if(mod % 2 == 1){
+            *it = *it+'\n';
+            bodyString += *it;
+        }
+        mod++;
+    }
+    body = bodyString; 
+}
+std::string RequestParse::createBodyStringFromLinesVector(strVec linesVec, strVec::iterator itFromBody){
+    std::string bodyString;
+    for(strVec ::iterator it=itFromBody;it!=linesVec.end();it++){
+        *it = *it+'\n';
+        bodyString += *it;
+    }
+    bodyString.pop_back();
+    return bodyString;
+}
+
 
 std::string RequestParse::getMethod(){
     return method;
@@ -75,9 +110,55 @@ std::string RequestParse::getPath(){
 std::string RequestParse::getVersion(){
     return version;
 }
-std::string RequestParse::getHeaders(){
-    return headers;
+std::string RequestParse::getHeaders(std::string header){
+    return headers[header];
 }
-bool RequestParse::getTcpKeepAlive(){
-    return tcpKeepAlive;
+std::string RequestParse::getBody(){
+    return body;
+}
+void RequestParse::test__headers(){
+    for(headersMap::iterator it=headers.begin();it!=headers.end();it++){
+        std::cout << "header: " << it->first << std::endl;
+        std::cout << "      directive: " << it->second << std::endl;
+    }
+}
+strVec RequestParse::splitLines(std::string str, char sep) {
+   size_t first = 0;
+   std::string::size_type last = str.find_first_of(sep);
+   strVec  result;
+    if(last == std::string::npos){
+        result.push_back(str);
+        return result;
+    }
+   while (first < str.size()) {
+     result.push_back(str.substr(first, last - first));
+     first = last + 1;
+     last = str.find_first_of(sep, first);
+     if (last == std::string::npos) last = str.size();
+   }
+   return result;
+ }
+
+std::string createDirectiveFromSplitVec(strVec line){
+    size_t idx = 0;
+    std::string directive;
+    for(strVec::iterator it=line.begin();it!=line.end();it++){
+        if(idx > 0){
+            *it+=':';
+            directive += *it;
+        }
+        idx++;
+    }
+    directive.pop_back();
+    return directive;
+}
+
+strVec createHeaderAndDirective(strVec::iterator it){
+    strVec line = split(*it, ':');
+    if(line.size() < 2){
+        throw std::runtime_error("Unexpected Error: Encountered header not delimited by ':'");//Notice: このケースがあるならParseの方法を変更しなければならない
+    }
+    if(line.size() > 2)
+        line[1] = createDirectiveFromSplitVec(line);
+    return line;
 }

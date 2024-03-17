@@ -118,14 +118,7 @@ std::vector<std::string> split(std::string str, char sep) {
    size_t first = 0;
    std::string::size_type last = str.find_first_of(sep);
    std::vector<std::string> result;
-   bool isSep = false;
-    for(size_t i=0;i<str.size();i++){
-        if(str[i] == sep){
-            isSep = true;
-            break;
-        }
-    }
-    if(!isSep){
+    if(last == std::string::npos){
         result.push_back(str);
         return result;
     }

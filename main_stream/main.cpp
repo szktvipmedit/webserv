@@ -2,8 +2,10 @@
 #include "../request/RequestParse.hpp"
 
 int main(int argc, char **argv){
-    if(argc != 2)
-        return -1;
+    if(argc != 2){
+        std::cout << "Error: invalid execute" << std::endl;
+        return 1;
+    }
     try{
         Config *conf = Config::getInstance(argv[1]);
         std::set<int> tcpSocketSet = conf->getTcpSockets();
@@ -55,11 +57,13 @@ int main(int argc, char **argv){
                 else
                 {
                     const unsigned int MAX_BUF_LENGTH = 4096;
-                    std::vector<char> buf(MAX_BUF_LENGTH);
-                    int bytesReceived = recv(sockfd, &buf[0], MAX_BUF_LENGTH, MSG_DONTWAIT);
+                    char buf[MAX_BUF_LENGTH];
+                    // std::vector<char> buf(MAX_BUF_LENGTH);
+                    // memset(&buf, 0, sizeof(buf));
+                    int bytesReceived = recv(sockfd, &buf, MAX_BUF_LENGTH, MSG_DONTWAIT);
                     if(bytesReceived > 0){
                         { //stringで受け取れれば足りるならこっち
-                            std::string request(buf.begin(), buf.end());
+                            std::string request = std::string(buf, buf+bytesReceived);
                             RequestParse requestInfo(request);
                             if(requestInfo.getMethod() == "GET")
                                 std::cout << "ここでGET METHODを実行する" << std::endl;
@@ -69,8 +73,9 @@ int main(int argc, char **argv){
                                 std::cout << "ここでDELETE METHODを実行する" << std::endl;
                         }
                         // { //ファイルを生成してそこに入れたいならこっち
-                        //     buf[bytesReceived] = '\0'; // 文字列の終端をセット
-                        //     std::string request(buf.begin(), buf.end());
+                        //     std::cout << "byte: " << bytesReceived << std::endl;
+                        //     std::string request = std::string(buf, buf+bytesReceived);
+                        //     std::cout << "request size = " << request.size() << std::endl;
                         //     std::cout << request << std::endl;
                         //     int requestfd = open("../request/server_recv.txt", O_RDWR | O_CREAT, 0644);
                         //     if(requestfd == -1){
