@@ -56,10 +56,11 @@ strVec createHeaderAndDirective(strVec::iterator it);
 
 void RequestParse::setHeaders(strVec linesVec, strVec::iterator& it){
     for(it=linesVec.begin();it != linesVec.end();it++){
-        std::cout << *it << std::endl;
+        // std::cout << *it << std::endl;
         if(*it == "" || *it == "\r" || (*it).size() == 0)
             break;
         strVec line = createHeaderAndDirective(it);
+        cutPrefixSpace(line[1]);
         headers[line[0]] = line[1];
     }
     it++;
@@ -110,7 +111,7 @@ std::string RequestParse::getPath(){
 std::string RequestParse::getVersion(){
     return version;
 }
-std::string RequestParse::getHeaders(std::string header){
+std::string RequestParse::getHeader(std::string header){
     return headers[header];
 }
 std::string RequestParse::getBody(){
@@ -161,4 +162,13 @@ strVec createHeaderAndDirective(strVec::iterator it){
     if(line.size() > 2)
         line[1] = createDirectiveFromSplitVec(line);
     return line;
+}
+
+std::string RequestParse::getHostName(){
+    std::string directive = getHeader("Host");
+    if(directive != ""){
+        strVec spDirective = split(directive, ':');
+        return spDirective[0];
+    }
+    return "";
 }

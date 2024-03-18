@@ -27,12 +27,14 @@ class VirtualServer{
         std::string getListenPort();
         serverMap::iterator getItEnd();
         void setLocation(std::string locationPath, Location *location);
+        std::string getCgiPath();
     public:
         void confirmValues();
     private:
         void confirmServerName();
         void confirmListenPort();
         void confirmErrorPage();
+        void confirmCgi();
 };
 
 #endif

@@ -1,6 +1,9 @@
 #include "../config/Config.hpp"
 #include "../request/RequestParse.hpp"
+#include <sys/wait.h>
 
+#define W 1
+#define R 0
 int main(int argc, char **argv){
     if(argc != 2){
         std::cout << "Error: invalid execute" << std::endl;
@@ -16,13 +19,13 @@ int main(int argc, char **argv){
             throw std::runtime_error("Error: kqueue() failed()"); 
         }
         std::map<int, struct kevent*>keventMap;
-        struct timespec timeSpec;
-        timeSpec.tv_nsec = 1000;
+        struct timespec timeSpec = {0,10000000};
         for(socketSet::const_iterator it=tcpSocketSet.begin();it!=tcpSocketSet.end();it++){
             keventMap[*it] = new struct kevent;
             EV_SET(keventMap[*it], *it, EVFILT_READ, EV_ADD, 0, 0, NULL);
             if(kevent(kq, keventMap[*it], 1, NULL, 0, &timeSpec) == -1){ // ポーリングするためにはtimeout引数を非NULLのtimespec構造体ポインタを指す必要がある
-                std::cout << strerror(errno) << std::endl;
+                perror("kevent"); // kevent: エラーメッセージ
+                printf("errno = %d (%s)\n", errno, strerror(errno)); 
                 for(socketSet::const_iterator it=tcpSocketSet.begin();it!=tcpSocketSet.end();it++)
                     close(*it);
                 throw std::runtime_error("Error: kevent() failed()");
@@ -58,19 +61,44 @@ int main(int argc, char **argv){
                 {
                     const unsigned int MAX_BUF_LENGTH = 4096;
                     char buf[MAX_BUF_LENGTH];
-                    // std::vector<char> buf(MAX_BUF_LENGTH);
-                    // memset(&buf, 0, sizeof(buf));
+                    char res_buf[MAX_BUF_LENGTH];
                     int bytesReceived = recv(sockfd, &buf, MAX_BUF_LENGTH, MSG_DONTWAIT);
                     if(bytesReceived > 0){
                         { //stringで受け取れれば足りるならこっち
                             std::string request = std::string(buf, buf+bytesReceived);
                             RequestParse requestInfo(request);
-                            if(requestInfo.getMethod() == "GET")
-                                std::cout << "ここでGET METHODを実行する" << std::endl;
-                            else if(requestInfo.getMethod() == "POST")
-                                std::cout << "ここでPOST METHODを実行する" << std::endl;
-                            else if(requestInfo.getMethod() == "DELETE")
-                                std::cout << "ここでDELETE METHODを実行する" << std::endl;
+                            int pipe_c2p[2];
+                            if(pipe(pipe_c2p) < 0){
+                                std::cerr << "Error: pipe() failed" << std::endl;
+                                exit(EXIT_FAILURE);
+                            }
+                            std::cout << "create pipe" << std::endl;
+                            pid_t pid = fork();
+                            if(pid == 0){
+                                //child prosess
+                                close(pipe_c2p[R]);
+                                dup2(pipe_c2p[W],1);
+                                close(pipe_c2p[W]);
+                                extern char** environ;
+                                VirtualServer server = conf->getServer(requestInfo.getHostName());
+                                std::string cgiPath = server.getCgiPath();
+                                char* const cgi_argv[] = { const_cast<char*>(cgiPath.c_str()), NULL };
+                                if(execve("../cgi/test.cgi", cgi_argv, environ) < 0)
+                                    std::cout << "Error: execve() failed" << std::endl;
+                            }else{
+                                waitpid(pid, NULL, 0);
+                                std::cout << "finish waitpid" << std::endl;
+                                close(pipe_c2p[W]);
+                                ssize_t byte = read(pipe_c2p[R], &res_buf, MAX_BUF_LENGTH);
+                                if(byte > 0){
+                                    res_buf[byte] = '\0';
+                                    if(send(sockfd, &res_buf, byte, 0) < 0){
+                                        std::cerr << "Error: send() failed" << std::endl;
+                                    }else{
+                                        std::cout << "send!!!!!!" << std::endl;
+                                    }
+                                }
+                            }
                         }
                         // { //ファイルを生成してそこに入れたいならこっち
                         //     std::cout << "byte: " << bytesReceived << std::endl;
