@@ -20,9 +20,9 @@ class RequestParse{
         std::string getMethod();
         std::string getPath();
         std::string getVersion();
-        std::string getHeaders(std::string header);
+        std::string getHeader(std::string header);
         std::string getBody();
-
+        std::string getHostName();
     private: 
         std::string getRequestLine(std::string& requestMessage);
         void setMethodPathVersion(std::string& requestMessage);

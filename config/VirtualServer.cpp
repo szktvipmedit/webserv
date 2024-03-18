@@ -10,11 +10,13 @@ VirtualServer::VirtualServer(const VirtualServer& other){
     if(this != &other)
         *this = other;
 }
+
 VirtualServer& VirtualServer::operator=(const VirtualServer& other){
     if(this == &other)
         return *this;
     serverSetting = other.serverSetting;
     locations = other.locations;
+    isDefault = other.isDefault;
     return *this;
 }
 
@@ -51,6 +53,7 @@ void VirtualServer::confirmValues(){
     confirmServerName();
     confirmListenPort();
     confirmErrorPage();
+    confirmCgi();
 }
 void VirtualServer::confirmServerName(){
     if(serverSetting.find("server_name") == serverSetting.end()){
@@ -60,7 +63,7 @@ void VirtualServer::confirmServerName(){
 
 void VirtualServer::confirmListenPort(){
     if(serverSetting.find("listen") == serverSetting.end()){
-        setSetting("listen", "80");
+        setSetting("listen", "8080");
         return;
     }
     size_t len = serverSetting["listen"].size();
@@ -88,13 +91,23 @@ void VirtualServer::confirmListenPort(){
 void VirtualServer::confirmErrorPage(){
     if(serverSetting.find("error_page") == serverSetting.end()){
         setSetting("error_page", "404 document/404.html");
+        return;
     }
-    if(serverSetting.find("error_page") != serverSetting.end()){
-        std::vector<std::string>status = split(serverSetting["error_page"], ' ');
-        for(std::vector<std::string>::iterator it=status.begin(); it != status.end();it++){
-            if(*it == "404")
-                return;
-        }
-        serverSetting["error_page"] = "404 "+serverSetting["error_page"];
+    std::vector<std::string>status = split(serverSetting["error_page"], ' ');
+    for(std::vector<std::string>::iterator it=status.begin(); it != status.end();it++){
+        if(*it == "404")
+            return;
+    }
+    serverSetting["error_page"] = "404 "+serverSetting["error_page"];
+}
+
+
+std::string VirtualServer::getCgiPath(){
+    return serverSetting["cgi_path"];
+}
+void VirtualServer::confirmCgi(){
+    if(serverSetting.find("cgi_path") == serverSetting.end()){
+        setSetting("cgi_path", "../cgi/default.cgi");
+        return ;
     }
 }

@@ -14,7 +14,7 @@ Config::Config(std::string configPath){
 Config::~Config(){}
 
 std::string Config::httpDirectives_[] = {""};
-std::string Config::serverDirectives_[] = {"server_name","client_max_body_size", "index", "listen", "rewrite", "root", ""};
+std::string Config::serverDirectives_[] = {"cgi_path", "server_name", "client_max_body_size", "index", "listen", "rewrite", "root", ""};
 std::string Config::locationDirectives_[] = {"index", "rewrite", "root", ""};
 
 /*========================================
@@ -232,6 +232,11 @@ void Config::exploreLocationBlock(VirtualServer *server, std::ifstream *ifs, std
     server->setLocation(location->getLocationPath(), location);
 }
 
+
+
+VirtualServer Config::getServer(const std::string serverName){
+    return *(servers_[serverName]);
+}
 //utils -----------------------------------------------------------------------
 
 // bool Config::checkDupServerDirective(std::string directiveName, VirtualServer& server){

@@ -44,6 +44,7 @@ class Config{
         static Config* getInstance(std::string configPath);
         static void readConfig(Config *inst);
         socketSet getTcpSockets();
+        VirtualServer getServer(const std::string serverName);
     private:
         static void exploreHttpBlock(std::ifstream *ifs);
         static void exploreServerBlock(std::ifstream *ifs);
