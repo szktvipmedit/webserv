@@ -100,22 +100,7 @@ int main(int argc, char **argv){
                                 }
                             }
                         }
-                        // { //ファイルを生成してそこに入れたいならこっち
-                        //     std::cout << "byte: " << bytesReceived << std::endl;
-                        //     std::string request = std::string(buf, buf+bytesReceived);
-                        //     std::cout << "request size = " << request.size() << std::endl;
-                        //     std::cout << request << std::endl;
-                        //     int requestfd = open("../request/server_recv.txt", O_RDWR | O_CREAT, 0644);
-                        //     if(requestfd == -1){
-                        //         perror("open");
-                        //         throw std::runtime_error("open failed");
-                        //     }
-                        //     write(requestfd, request.c_str(), request.size());
-                        //     close(requestfd);
-                        // }
-                        
                     }   
-                    close(sockfd);
                 }
             }
         }

@@ -21,7 +21,7 @@ strOutData += "ETag: \"";
 strOutData += "2d-5913a76187bc0\"";
 strOutData += "\n";
 strOutData += "Accept-Ranges: bytes\n";
-strOutData += "Content-Length: 45\n";
+strOutData += "Content-Length: 44\n";
 strOutData += "Keep-Alive: timeout=5, max=100\n";
 strOutData += "Connection: Keep-Alive\n";
 strOutData += "Content-Type: text/html\n";
