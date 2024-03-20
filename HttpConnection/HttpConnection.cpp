@@ -26,7 +26,7 @@ void HttpConnection::destroy(HttpConnection* inst){
 void HttpConnection::connectionPrepare(socketSet tcpSockets){
     createKqueue();
     createTcpConnectionEvents(tcpSockets);
-    eventlist = new struct kevent[tcpSockets.size()+(tcpSockets.size()/2)]; //ここの容量は適当に決めました。
+    eventlist = new struct kevent[tcpSockets.size()*6]; //最近のブラウザは最大6つのtcpコネクションを確立するらしいのでtcpSockets*6倍のイベント容量を用意する
 }
 
 void HttpConnection::createKqueue(){
