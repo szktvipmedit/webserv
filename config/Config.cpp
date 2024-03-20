@@ -44,8 +44,6 @@ void Config::readConfig(Config *inst){
     
 }
 
-#define SOCKET int
-#define INVALID_SOCKET -1 
 
 SOCKET tcpListen(std::string hostname, std::string port){
 
