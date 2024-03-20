@@ -17,6 +17,8 @@ int main(int argc, char **argv){
         connection->startEventLoop(conf, tcpSocketSet);
     }catch(std::runtime_error& e){
         std::cerr << e.what() << std::endl;
+    }catch(std::bad_alloc& e){
+        std::cerr << e.what() << std::endl;
     }
 
 }
