@@ -3,6 +3,7 @@
 
 #include "../config/Config.hpp"
 #include "../request/RequestParse.hpp"
+#include "HttpSession.hpp"
 
 typedef struct timespec timespec;
 typedef std::map<int, struct kevent*> keventMap;
@@ -14,7 +15,7 @@ typedef std::map<int, struct kevent*> keventMap;
 class HttpConnection{
     private:
         static int kq;
-        static keventMap events;
+        static keventMap tcpEvents;
         static struct kevent *eventlist;
         static timespec timeSpec;
     private:
@@ -33,8 +34,11 @@ class HttpConnection{
         static void createTcpConnectionEvents(socketSet tcpSockets);
         static void createNewEvent(SOCKET targetSocket);
         static void eventRegister(SOCKET fd);
-        void eventExecute(Config *conf, SOCKET sockefd, socketSet tcpSockets);
-        void establishTcpConnection(SOCKET sockfd);
+        void deleteZombie();
+        void eventConnect(Config *conf, SOCKET sockefd, socketSet tcpSockets);
+        void establishTcpConnection(Config *conf, SOCKET sockfd);
+        void startCommunicateWithClient(Config *conf, SOCKET newSocket);
+        void closeParentSockets();
         void requestHandler(Config *conf, SOCKET sockfd);
         void sendResponse(Config *conf, RequestParse& requestInfo, SOCKET sockfd);
         void executeCgi(Config *conf, RequestParse& requestInfo, int *pipe_c2p);
