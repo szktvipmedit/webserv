@@ -1,6 +1,6 @@
 CPPS =  ../config/utils.cpp ../config/Config.cpp ../config/VirtualServer.cpp ../config/Location.cpp \
 		../request/RequestParse.cpp \
-		../HttpConnection/HttpConnection.cpp \
+		../HttpConnection/HttpConnection.cpp ../HttpConnection/HttpSession.cpp \
 		main.cpp
 
 OBJS = ${CPPS:.cpp=.o}
