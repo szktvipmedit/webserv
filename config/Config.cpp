@@ -233,6 +233,8 @@ void Config::exploreLocationBlock(VirtualServer *server, std::ifstream *ifs, std
 
 
 VirtualServer Config::getServer(const std::string serverName){
+    if(servers_.find(serverName) == servers_.end())
+        return *(servers_[""]);
     return *(servers_[serverName]);
 }
 //utils -----------------------------------------------------------------------

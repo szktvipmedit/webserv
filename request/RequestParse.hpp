@@ -23,6 +23,7 @@ class RequestParse{
         std::string getHeader(std::string header);
         std::string getBody();
         std::string getHostName();
+        char* const* createCgiArgs(const VirtualServer server);
     private: 
         std::string getRequestLine(std::string& requestMessage);
         void setMethodPathVersion(std::string& requestMessage);
@@ -32,6 +33,9 @@ class RequestParse{
         void setBody(std::vector<std::string> linesVec, std::vector<std::string>::iterator itFromBody);
         std::string createBodyStringFromLinesVector(std::vector<std::string> linesVec, std::vector<std::string>::iterator itFromBody);
         void bodyUnChunk(std::vector<std::string> linesVec, std::vector<std::string>::iterator itFromBody);
+
+        std::string getRootDir(VirtualServer& server);
+        Location getNearLocation(locationsMap locations);
     private:
 
     private:

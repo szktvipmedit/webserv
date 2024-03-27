@@ -3,6 +3,7 @@
 /*========================================
         orthodox canonical form
 ========================================*/
+Location::Location(){}
 Location::Location(std::string locationPath): path(locationPath){}
 Location::~Location(){}
 Location::Location(const Location& other){
@@ -23,6 +24,13 @@ Location& Location::operator=(const Location& other){
 ========================================*/
 locationMap::iterator Location::searchSetting(std::string directiveName){
     return locationSetting.find(directiveName);
+}
+
+std::string Location::getSetting(std::string directiveName){
+    if(locationSetting.find(directiveName) != locationSetting.end()){
+        return locationSetting[directiveName];
+    }
+    return "";
 }
 
 locationMap::iterator Location::getItEnd(){

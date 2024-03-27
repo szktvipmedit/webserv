@@ -28,6 +28,7 @@ class VirtualServer{
         serverMap::iterator getItEnd();
         void setLocation(std::string locationPath, Location *location);
         std::string getCgiPath();
+        locationsMap getLocations();
     public:
         void confirmValues();
     private:

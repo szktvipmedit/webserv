@@ -67,7 +67,7 @@ void RequestParse::setHeaders(strVec linesVec, strVec::iterator& it){
 }
 
 void RequestParse::setBody(strVec  linesVec, strVec::iterator itFromBody) {
-    std::cout << (*itFromBody).size() << std::endl;
+    // std::cout << (*itFromBody).size() << std::endl;
     if((*itFromBody).size() == 0 || itFromBody == linesVec.end()){
         body = "";
         return;
@@ -171,4 +171,50 @@ std::string RequestParse::getHostName(){
         return spDirective[0];
     }
     return "";
+}
+
+
+/*
+    cgi
+*/
+
+char*const* RequestParse::createCgiArgs(VirtualServer server){
+    // int argc = countArgs();
+    std::string cgiPath = server.getCgiPath();
+    std::string path = getRootDir(server)+getPath();
+    std::cerr << "root+path: " << path << std::endl;
+    // char*const* cgiArgs[argc];
+    char* const cgi_argv[] = { const_cast<char*>(cgiPath.c_str()), const_cast<char*>(path.c_str()), NULL };
+
+}
+
+std::string RequestParse::getRootDir(VirtualServer& server){
+    Location location = getNearLocation(server.getLocations());
+    return location.getSetting("root");
+}
+
+size_t getMatchNumOfHierarchy(strVec &splitRequestPath, strVec &splitPath){
+    size_t match = 0;
+    size_t min = std::min(splitRequestPath.size(), splitPath.size());
+    for(size_t i=0;i<min;i++){
+        if(splitRequestPath[i] != splitPath[i])
+            return match;
+        match++;
+    }
+    return match;
+}
+Location RequestParse::getNearLocation(locationsMap locations){
+    strVec splitRequestPath = split(getPath(), '/');
+    Location nearLocation;
+    size_t match = 0;
+
+    for(locationsMap::iterator it=locations.begin();it!=locations.end();it++){
+        strVec splitPath = split(it->first, '/');//location / {のときの動作が多分うまくいかない
+        size_t m = getMatchNumOfHierarchy(splitRequestPath, splitPath);
+        if(m > match){
+            match = m;
+            nearLocation = *(it->second);
+        }
+    }
+    return nearLocation;
 }

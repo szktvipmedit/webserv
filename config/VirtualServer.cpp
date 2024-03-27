@@ -111,3 +111,7 @@ void VirtualServer::confirmCgi(){
         return ;
     }
 }
+
+locationsMap VirtualServer::getLocations(){
+    return locations;
+}

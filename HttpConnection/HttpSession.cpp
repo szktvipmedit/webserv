@@ -53,8 +53,7 @@ void HttpSession::executeCgi(Config *conf, RequestParse& requestInfo, int pipe_c
     close(pipe_c2p[W]);
     extern char** environ;
     VirtualServer server = conf->getServer(requestInfo.getHostName());
-    std::string cgiPath = server.getCgiPath();
-    char* const cgi_argv[] = { const_cast<char*>(cgiPath.c_str()), NULL };
+    char* const *cgi_argv = requestInfo.createCgiArgs(server);
     if(execve("../cgi/test.cgi", cgi_argv, environ) < 0)
         std::cout << "Error: execve() failed" << std::endl;
 }
